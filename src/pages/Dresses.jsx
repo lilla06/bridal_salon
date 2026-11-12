@@ -17,16 +17,29 @@ const Dresses = () => {
       setLoading(true)
       setError(null)
 
-      let query = supabase.from('dresses').select('*')
-
-      if (category && category !== 'all') {
-        query = query.eq('style', category)
-      }
-
-      const { data, error: fetchError } = await query
+      const { data, error: fetchError } = await supabase
+        .from('dresses')
+        .select(`
+          *,
+          categories:category_id (
+            id,
+            slug,
+            name
+          )
+        `)
 
       if (fetchError) throw fetchError
-      setDresses(data || [])
+
+      let filteredDresses = data || []
+
+      if (category && category !== 'all') {
+        const normalizedCategory = category === 'straight' ? 'sheath' : category
+        filteredDresses = filteredDresses.filter(
+          (dress) => dress.categories?.slug === normalizedCategory
+        )
+      }
+
+      setDresses(filteredDresses)
     } catch (err) {
       setError(err.message)
       console.error('Hiba a ruhák betöltésekor:', err)
@@ -37,11 +50,12 @@ const Dresses = () => {
 
   const getCategoryLabel = () => {
     const labels = {
-      'all': 'Összes ruha',
+      all: 'Összes ruha',
       'a-line': 'A-vonalú ruhák',
       'ball-gown': 'Báli ruhák',
-      'mermaid': 'Sellő fazonú ruhák',
-      'straight': 'Egyenes fazonú ruhák'
+      mermaid: 'Sellő fazonú ruhák',
+      sheath: 'Egyenes fazonú ruhák',
+      straight: 'Egyenes fazonú ruhák'
     }
     return labels[category] || 'Ruhák'
   }
@@ -64,20 +78,25 @@ const Dresses = () => {
         </div>
       ) : (
         <div className="dresses-grid">
-          {dresses.map((dress) => (
-            <div key={dress.id} className="dress-card">
-              {dress.image_url && (
-                <img src={dress.image_url} alt={dress.name} className="dress-image" />
-              )}
-              <div className="dress-info">
-                <h3>{dress.name}</h3>
-                <p className="dress-style">{dress.style}</p>
-                {dress.price && <p className="dress-price">{dress.price} Ft</p>}
-                {dress.description && <p className="dress-description">{dress.description}</p>}
-                <button className="dress-btn">Részletek megtekintése</button>
+          {dresses.map((dress) => {
+            const imageUrl = dress.main_image_url || dress.gallery_image_urls?.[0]
+            return (
+              <div key={dress.id} className="dress-card">
+                {imageUrl && (
+                  <img src={imageUrl} alt={dress.name} className="dress-image" />
+                )}
+                <div className="dress-info">
+                  <h3>{dress.name}</h3>
+                  <p className="dress-style">{dress.categories?.name || 'Ruhafazon'}</p>
+                  {dress.price && <p className="dress-price">{dress.price} Ft</p>}
+                  {dress.public_description && (
+                    <p className="dress-description">{dress.public_description}</p>
+                  )}
+                  <button className="dress-btn">Részletek megtekintése</button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

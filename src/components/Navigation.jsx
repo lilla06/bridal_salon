@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const Navigation = ({ menuOpen, setMenuOpen }) => {
+const Navigation = ({ user, menuOpen, setMenuOpen }) => {
   const [dressDropdownOpen, setDressDropdownOpen] = useState(false)
+  const isAdminUser = (currentUser) => Boolean(
+    currentUser?.is_admin ||
+    currentUser?.user_metadata?.is_admin ||
+    currentUser?.app_metadata?.is_admin ||
+    currentUser?.email === 'admin@saphira.hu'
+  )
 
   const dressCategories = [
     { label: 'Összes ruha', value: 'all' },
@@ -83,6 +89,11 @@ const Navigation = ({ menuOpen, setMenuOpen }) => {
         <li>
           <Link to="/contact" onClick={handleMenuItemClick}>
             KAPCSOLAT
+          </Link>
+        </li>
+        <li>
+          <Link to={user ? (isAdminUser(user) ? '/admin' : '/profil') : '/login'} onClick={handleMenuItemClick}>
+            {user ? (isAdminUser(user) ? 'ADMIN' : 'PROFIL') : 'BELÉPÉS'}
           </Link>
         </li>
       </ul>

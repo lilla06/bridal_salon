@@ -316,7 +316,7 @@ const Booking = () => {
     console.log('[handleConfirmBooking] Called')
     console.log('[handleConfirmBooking] selectedSlot:', selectedSlot)
     console.log('[handleConfirmBooking] user:', user)
-    
+
     if (!selectedSlot || !user) {
       console.log('[handleConfirmBooking] Missing selectedSlot or user, returning')
       alert('Bejelentkezés szükséges!')
@@ -326,8 +326,24 @@ const Booking = () => {
     setBookingSubmitting(true)
     try {
       const dateStr = selectedSlot.date.toISOString().split('T')[0]
+      const todayStr = new Date().toISOString().split('T')[0]
       const now = new Date().toISOString()
-      
+
+      const { data: existingFutureBookings, error: existingError } = await supabase
+        .from('availability')
+        .select('id, date, time, status')
+        .eq('booked_by_user_id', user.id)
+        .gte('date', todayStr)
+        .in('status', ['booked', 'blocked'])
+
+      if (existingError) throw existingError
+
+      if ((existingFutureBookings || []).length > 0) {
+        alert('Már van egy jövőbeni foglalásod. Előbb mond le a meglévő időpontot, mielőtt újat foglalnál.')
+        setBookingSubmitting(false)
+        return
+      }
+
       console.log('[handleConfirmBooking] Attempting booking with:', {
         date: dateStr,
         time: selectedSlot.time,
@@ -335,8 +351,7 @@ const Booking = () => {
         status: 'booked',
         booked_at: now
       })
-      
-      // Try UPSERT without select()
+
       const { data, error } = await supabase
         .from('availability')
         .upsert({
@@ -344,8 +359,9 @@ const Booking = () => {
           time: selectedSlot.time,
           status: 'booked',
           booked_by_user_id: user.id,
-          booked_at: now
-        }, { 
+          booked_at: now,
+          blocked_reason: null
+        }, {
           onConflict: 'date,time'
         })
 
@@ -360,20 +376,21 @@ const Booking = () => {
       }
 
       console.log('[handleConfirmBooking] UPSERT successful:', data)
-      
-      // Immediately update UI with booked slot (kék - saját foglalás)
+
       const key = `${dateStr}-${selectedSlot.time}`
       setAvailableSlots(prev => ({
         ...prev,
-        [key]: { status: 'booked', bookedBy: user.id }
+        [key]: {
+          status: 'booked',
+          bookedBy: user.id
+        }
       }))
-      
+
       alert(`Sikeres foglalás! ${formatDateFull(selectedSlot.date)} ${selectedSlot.time}`)
       setSelectedDate(new Date(selectedSlot.date))
       setShowConfirmation(false)
       setSelectedSlot(null)
-      
-      // Refresh availability from database for accuracy
+
       setTimeout(() => {
         console.log('[handleConfirmBooking] Refreshing availability from database...')
         setLoading(true)
@@ -415,7 +432,8 @@ const Booking = () => {
         .update({
           status: 'available',
           booked_by_user_id: null,
-          booked_at: null
+          booked_at: null,
+          blocked_reason: null
         })
         .eq('date', dateStr)
         .eq('time', time)
@@ -533,10 +551,10 @@ const Booking = () => {
                   className = 'booked-by-me'
                   icon = '✓'
                   title = 'Az én foglalásom - kattints a lemondáshoz'
-                } else if (slotData && slotData.status !== 'available') {
+                } else if (slotData && (slotData.status === 'booked' || slotData.status === 'blocked')) {
                   className = 'unavailable'
                   icon = '✗'
-                  title = slotData?.blockedReason || 'Nem elérhető'
+                  title = slotData.status === 'blocked' ? 'Blokkolt időpont' : 'Foglalt'
                 }
 
                 return (

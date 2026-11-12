@@ -2,7 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabaseClient'
 
-const Login = () => {
+const Login = ({ setUser }) => {
+  const isAdminUser = (user) => Boolean(
+    user?.is_admin ||
+    user?.user_metadata?.is_admin ||
+    user?.app_metadata?.is_admin ||
+    user?.email === 'admin@saphira.hu'
+  )
+
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,8 +45,31 @@ const Login = () => {
         }
 
         if (data.user) {
-          console.log('Sikeres bejelentkezés:', data.user.email)
-          navigate('/booking')
+          let isAdmin = isAdminUser(data.user)
+
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', data.user.id)
+            .maybeSingle()
+
+          if (!profileError && profileData?.is_admin !== undefined) {
+            isAdmin = Boolean(profileData.is_admin)
+          }
+
+          const enrichedUser = {
+            ...data.user,
+            is_admin: isAdmin,
+            user_metadata: {
+              ...(data.user.user_metadata || {}),
+              is_admin: isAdmin,
+            },
+          }
+
+          console.log('Sikeres bejelentkezés:', data.user.email, { isAdmin, profileData })
+          setUser(enrichedUser)
+          const nextPath = isAdmin ? '/admin' : '/profil'
+          navigate(nextPath)
         }
       } else {
         // Regisztráció
@@ -68,8 +98,9 @@ const Login = () => {
 
         if (data.user) {
           console.log('Sikeres regisztráció:', data.user.email)
+          setUser(data.user)
           alert('Regisztráció sikeres! Bejelentkeztél az időpontfoglaláshoz.')
-          navigate('/booking')
+          navigate('/profil')
         }
       }
     } catch (err) {

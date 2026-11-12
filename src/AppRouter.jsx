@@ -10,6 +10,7 @@ import Booking from './pages/Booking'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
 import AdminBookings from './pages/AdminBookings'
+import DressDetail from './pages/DressDetail'
 import { supabase } from './services/supabaseClient'
 import './App.css'
 
@@ -70,7 +71,9 @@ function AppRouter() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/dresses" element={<Dresses />} />
             <Route path="/dresses/:category" element={<Dresses />} />
+            <Route path="/dress/:slug" element={<DressDetail />} />
             <Route path="/services" element={<Services />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/contact" element={<Contact />} />

@@ -16,7 +16,7 @@ const Navigation = ({ user, menuOpen, setMenuOpen }) => {
     { label: 'A-vonalú ruha', value: 'a-line' },
     { label: 'Báli ruha', value: 'ball-gown' },
     { label: 'Sellő fazonú ruha', value: 'mermaid' },
-    { label: 'Egyenes fazonú ruha', value: 'straight' }
+    { label: 'Egyenes fazonú ruha', value: 'sheath' }
   ]
 
   const handleMenuItemClick = () => {
@@ -58,17 +58,18 @@ const Navigation = ({ user, menuOpen, setMenuOpen }) => {
           onMouseEnter={() => setDressDropdownOpen(true)}
           onMouseLeave={() => setDressDropdownOpen(false)}
         >
-          <button
+          <Link
             className="dropdown-toggle"
+            to="/dresses/all"
             onClick={handleDressDropdownToggle}
           >
             RUHÁINK
-          </button>
+          </Link>
           <ul className={`dropdown-menu ${dressDropdownOpen ? 'active' : ''}`}>
             {dressCategories.map((category) => (
               <li key={category.value}>
                 <Link 
-                  to={`/dresses/${category.value}`} 
+                  to={category.value === 'all' ? '/dresses/all' : `/dresses/${category.value}`} 
                   onClick={handleDressSubClick}
                 >
                   {category.label}

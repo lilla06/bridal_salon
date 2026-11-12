@@ -29,20 +29,26 @@ const Dresses = () => {
 
       const { data, error: fetchError } = await supabase
         .from('dresses')
-        .select('*, categories:category_id (id, slug, name)')
+        .select('*')
         .eq('is_published', true)
 
       if (fetchError) throw fetchError
 
+      const categoryMap = new Map((categoryData || []).map((cat) => [cat.id, cat]))
+      const dressesWithCategories = (data || []).map((dress) => ({
+        ...dress,
+        categories: categoryMap.get(dress.category_id) || null
+      }))
+
       const categoryImages = categoryData.map((cat) => {
-        const firstDress = (data || []).find((dress) => dress.category_id === cat.id)
+        const firstDress = dressesWithCategories.find((dress) => dress.category_id === cat.id)
         return {
           ...cat,
           image: firstDress?.main_image_url || firstDress?.gallery_image_urls?.[0] || null
         }
       })
 
-      let filteredDresses = data || []
+      let filteredDresses = dressesWithCategories
 
       if (activeCategory && activeCategory !== 'all') {
         filteredDresses = filteredDresses.filter(

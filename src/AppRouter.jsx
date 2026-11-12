@@ -46,7 +46,7 @@ function AppRouter() {
   }
 
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL || '/'}>
       <div className="app">
         <header className="header">
           <div className="header-top">

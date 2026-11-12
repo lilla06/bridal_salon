@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 const Navigation = ({ user, menuOpen, setMenuOpen }) => {
   const [dressDropdownOpen, setDressDropdownOpen] = useState(false)
+  const logoSrc = `${import.meta.env.BASE_URL}saphira.png`
   const isAdminUser = (currentUser) => Boolean(
     currentUser?.is_admin ||
     currentUser?.user_metadata?.is_admin ||
@@ -35,7 +36,7 @@ const Navigation = ({ user, menuOpen, setMenuOpen }) => {
   return (
     <nav className="navbar">
       <Link to="/" className="brand-logo" aria-label="Saphira salon home">
-        <img src="/saphira.png" alt="Saphira salon logo" className="brand-wordmark" />
+        <img src={logoSrc} alt="Saphira salon logo" className="brand-wordmark" />
       </Link>
       <button 
         className="hamburger" 

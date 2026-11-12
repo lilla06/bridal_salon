@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting...</title>
+    <script>
+      const base = '/bridal_salon/';
+      const pathname = window.location.pathname;
+      const search = window.location.search;
+      const hash = window.location.hash;
+
+      if (pathname.startsWith(base)) {
+        const relative = pathname === base ? '/' : pathname.slice(base.length);
+        const target = `${base}${relative === '/' ? '' : relative}${search}${hash}`;
+        sessionStorage.setItem('gh-pages-redirect', target);
+        window.location.replace(base);
+      } else {
+        window.location.replace(base);
+      }
+    </script>
+  </head>
+  <body></body>
+</html>
